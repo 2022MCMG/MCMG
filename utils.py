@@ -14,7 +14,6 @@ import itertools
 import torch
 import scipy.sparse as sp
 
-#data process
 import torch
 from utils_data import *
 import pandas as pd
