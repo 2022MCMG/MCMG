@@ -10,10 +10,10 @@ MCMG is a model proposed in 'A Multi-Channel Next POI Recommendation Framework w
 - `dataset/`
   - `AdjacentMatrix.txt`. the constructed adjacent matrix of Calgary.
   - `check-ins_CAL.csv`: reindexed check-ins information of Calgary;
-  - `test_CAL.csv`: testset of Calgary;
-  - `test_group_label.csv`: group lables of trajectories in testset;
-  - `train_CAL.csv`: trainset of Calgary;
-  - `train_group_label.csv`: group lables of trajectories in trainset;
+  - `test_CAL.csv`: test set of Calgary;
+  - `test_group_label.csv`: group lables of trajectories in test set;
+  - `train_CAL.csv`: training set of Calgary;
+  - `train_group_label.csv`: group lables of trajectories in training set;
 - `main.py`: main file;
 - `model.py`: MCMG model file;
 - `parameter_setting.py`: parameter settings file;
@@ -22,7 +22,8 @@ MCMG is a model proposed in 'A Multi-Channel Next POI Recommendation Framework w
 
 ### More Experimental Settings
 - Environment
-  - Our proposed MCMG is implemented using pytorch 1.7.1, with Python 3.6.3 from Anaconda 4.3.30. All the experiments are carried out on a machine with Windows 10, Intel CORE i7-8565U CPU and 16G RAM. The following packages are needed (along with their dependencies):
+  - Our proposed MCMG is implemented using pytorch 1.7.1, with Python 3.6.3 from Anaconda 4.3.30. All the experiments are carried out on a machine with Windows 10, Intel CORE i7-8565U CPU, NIVIDA GeForce RTX 2080 and 16G RAM. The following packages are needed (along with their dependencies):
+    - cuda==11.0
     - hyperopt==0.2.4
     - numpy==1.19.5
     - pandas==1.1.5
