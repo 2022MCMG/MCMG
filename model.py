@@ -32,7 +32,7 @@ class PositionEmbedding(nn.Module):
 
     def forward(self, x):
         batch_size, seq_len = x.size()[:2]
-        embeddings = self.weight[:seq_len, :].view(1, seq_len, self.embedding_dim)#torch.Size([1, 5, 120])
+        embeddings = self.weight[:seq_len, :].view(1, seq_len, self.embedding_dim)
         if self.mode == self.MODE_ADD:
             return x + embeddings
         raise NotImplementedError('Unknown mode: %s' % self.mode)
@@ -46,7 +46,7 @@ class GCN(Module):
         super(GCN, self).__init__()
         self.hidden_size = hidden_size
         self.weight = Parameter(torch.FloatTensor(self.hidden_size, self.hidden_size))
-        self.step = step#
+        self.step = step
         self.b_iah = Parameter(torch.Tensor(self.hidden_size))
         self.dropout=dropout
 
