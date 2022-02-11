@@ -47,11 +47,11 @@ class GCN(Module):
         self.hidden_size = hidden_size
         self.weight = Parameter(torch.FloatTensor(self.hidden_size, self.hidden_size))
         self.step = step#
-        self.b_iah = Parameter(torch.Tensor(self.hidden_size))#120
+        self.b_iah = Parameter(torch.Tensor(self.hidden_size))
         self.dropout=dropout
 
     def GCNCell(self, A, hidden):        
-        support=torch.matmul(hidden, self.weight)#
+        support=torch.matmul(hidden, self.weight)
         output = torch.matmul(A, support)
         output=output + self.b_iah
         output = F.relu(output)
@@ -80,7 +80,7 @@ class PointWiseFeedForward(torch.nn.Module):
         outputs += inputs
         return outputs
 class Model(Module):
-    def __init__(self,hidden_size,lr,l2,step,n_head,k_blocks,args,POI_n_node, cate_n_node,regi_n_node,time_n_node,POI_dist_n_node,regi_dist_n_node,len_max):#len_max=16
+    def __init__(self,hidden_size,lr,l2,step,n_head,k_blocks,args,POI_n_node, cate_n_node,regi_n_node,time_n_node,POI_dist_n_node,regi_dist_n_node,len_max):
         super(Model, self).__init__()
         self.hidden_size = hidden_size
         self.lr=lr
@@ -110,7 +110,7 @@ class Model(Module):
         self.w_r_t=Parameter(torch.FloatTensor(self.hidden_size, self.hidden_size))
         self.w_r_d=Parameter(torch.FloatTensor(self.hidden_size, self.hidden_size))
      
-        self.POI_embedding = nn.Embedding(self.POI_n_node, self.hidden_size)#n_no
+        self.POI_embedding = nn.Embedding(self.POI_n_node, self.hidden_size)
         self.cate_embedding=nn.Embedding(self.cate_n_node, self.hidden_size)
         self.regi_embedding=nn.Embedding(self.regi_n_node, self.hidden_size)
         self.time_embedding=nn.Embedding(self.time_n_node, self.hidden_size)
@@ -121,7 +121,7 @@ class Model(Module):
         self.multihead_attn = nn.MultiheadAttention(self.hidden_size, self.n_head).cuda()
         self.ffn=PointWiseFeedForward(self.hidden_size,self.dropout_fwd)
         self.pe = PositionEmbedding(len_max, self.hidden_size)
-        self.loss_function = nn.CrossEntropyLoss()#loss
+        self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=50, gamma=0.1)
         self.reset_parameters()
@@ -149,7 +149,7 @@ class Model(Module):
             regi_attn_output = regi_attn_output.transpose(0,1)
             regi_attn_output = self.ffn(regi_attn_output)
             
-        POI_hn = POI_attn_output[torch.arange(POI_mask.shape[0]).long(), torch.sum(POI_mask, 1) - 1]  # use last one as global interest
+        POI_hn = POI_attn_output[torch.arange(POI_mask.shape[0]).long(), torch.sum(POI_mask, 1) - 1]  
         cate_hn = cate_attn_output[torch.arange(cate_mask.shape[0]).long(), torch.sum(cate_mask, 1) - 1]
         regi_hn = regi_attn_output[torch.arange(regi_mask.shape[0]).long(), torch.sum(regi_mask, 1) - 1]
 
