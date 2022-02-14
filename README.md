@@ -16,11 +16,11 @@ MCMG is short for 'A **M**ulti-**C**hannel Next POI Recommendation Framework wit
     - `train_CAL.txt`: training set of Calgary;
     - `train_group_label_CAL.txt`: group lables of trajectories in training set;
   - `NY/`
-    - `NY.rar`: all the data files of NY;
+    - `NY.rar`: all the data files of New York;
   - `PHO/`
     - `PHO.rar`: all the data files of Phoenix;
   - `SIN/`
-    - `SIN.rar`: all the data files of SIN;
+    - `SIN.rar`: all the data files of Singapore;
 - `main.py`: main file;
 - `model.py`: MCMG model file;
 - `parameter_setting.py`: parameter settings file;
