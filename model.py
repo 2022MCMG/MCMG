@@ -50,7 +50,7 @@ class PositionEmbedding(nn.Module):
         )
 
     
-# GCN molule
+#GCN molule
 class GCN(Module):
     def __init__(self,hidden_size, step,dropout):
         super(GCN, self).__init__()
@@ -91,7 +91,7 @@ class PointWiseFeedForward(torch.nn.Module):
         return outputs
   
 
-# MCMG model
+#MCMG model
 class Model(Module):
     def __init__(self,hidden_size,lr,l2,step,n_head,k_blocks,args,POI_n_node, cate_n_node,regi_n_node,time_n_node,POI_dist_n_node,regi_dist_n_node,len_max):
         super(Model, self).__init__()
