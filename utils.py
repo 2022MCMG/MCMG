@@ -167,7 +167,6 @@ def generate_POI_dist_sequences(input_data, visit_sequence_dict):
 					lon1 = input_data['Longitude'][visit]
 					lat2 = input_data['Latitude'][seq[pos-1]]
 					lon2 = input_data['Longitude'][seq[pos-1]]
-					
 					dist = get_distance((lat1,lon1), (lat2,lon2))
 					dist_sequence.append(math.ceil(dist))
 					max_dist = max(max_dist, math.ceil(dist))
