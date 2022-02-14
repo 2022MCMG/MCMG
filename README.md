@@ -8,12 +8,19 @@ MCMG is short for 'A **M**ulti-**C**hannel Next POI Recommendation Framework wit
 ### File Descriptions
 
 - `dataset/`
-  - `AdjacentMatrix.txt`. the constructed adjacent matrix of Calgary.
-  - `check-ins_CAL.csv`: reindexed check-ins information of Calgary;
-  - `test_CAL.csv`: test set of Calgary;
-  - `test_group_label.csv`: group lables of trajectories in test set;
-  - `train_CAL.csv`: training set of Calgary;
-  - `train_group_label.csv`: group lables of trajectories in training set;
+  - `CAL/`
+    - `AdjacentMatrix_CAL.txt`: the adjacent matrix of Calgary;
+    - `CAL_checkin.csv`: check-ins information of Calgary;
+    - `test_CAL.txt`: test set of Calgary;
+    - `test_group_label_CAL.txt`: group lables of trajectories in test set;
+    - `train_CAL.txt`: training set of Calgary;
+    - `train_group_label_CAL.txt`: group lables of trajectories in training set;
+  - `NY/`
+    - `NY.rar`: all the data files of NY;
+  - `PHO/`
+    - `PHO.rar`: all the data files of Phoenix;
+  - `SIN/`
+    - `SIN.rar`: all the data files of SIN;
 - `main.py`: main file;
 - `model.py`: MCMG model file;
 - `parameter_setting.py`: parameter settings file;
