@@ -4,41 +4,14 @@ import pandas as pd
 import itertools
 import torch
 import scipy.sparse as sp
-
-
 import pickle
-import numpy as np
-import math
-import pandas as pd
-import itertools
-import torch
-import scipy.sparse as sp
-
-import torch
-from utils_data import *
-import pandas as pd
 import collections
-import numpy as np
 import os
-import pickle
 from collections import defaultdict
-import math
 import progressbar
-import itertools
 
 
-def trans_to_cuda(variable):
-    if torch.cuda.is_available():
-        return variable.cuda()
-    else:
-        return variable
-
-def trans_to_cpu(variable):
-    if torch.cuda.is_available():
-        return variable.cpu()
-    else:
-        return variable
-
+# generate valid sequence for original data
 def generate_sequence(input_data, min_seq_len, min_seq_num):
 	bar = progressbar.ProgressBar(maxval=input_data.index[-1], widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
 	input_data['Local_sg_time'] = pd.to_datetime(input_data['Local_Time_True'])
@@ -49,6 +22,7 @@ def generate_sequence(input_data, min_seq_len, min_seq_num):
 	for user in input_data['UserId'].unique():
 		user_visits = input_data[input_data['UserId'] == user]
 		user_sequences = [] 
+        #find visit sequences for each user:
 		unique_date_group = user_visits.groupby([user_visits['Local_sg_time'].dt.date]) 
 		for date in unique_date_group.groups:
 			single_date_visit = unique_date_group.get_group(date)
@@ -63,6 +37,9 @@ def generate_sequence(input_data, min_seq_len, min_seq_num):
 	bar.finish()
 	user_reIndex_mapping = np.array(list(total_sequences_dict.keys()),dtype=object)
 	return total_sequences_dict, max_seq_len, valid_visits, user_reIndex_mapping
+
+
+#remove consecutive visits (to the same POI) in a visit sequence
 def _remove_consecutive_visit(visit_record, bar):
 	clean_sequence = []
 	for index,visit in visit_record.iterrows():
@@ -70,6 +47,8 @@ def _remove_consecutive_visit(visit_record, bar):
 		clean_sequence.append(index)
 	return clean_sequence
 
+
+#data augmentation: add more sequences from existing sequences
 def aug_sequence(input_sequence_dict, min_len):
 	augmented_sequence_dict, ground_truth_dict = {}, {}
 	for user in input_sequence_dict.keys():
@@ -86,16 +65,8 @@ def aug_sequence(input_sequence_dict, min_len):
 		ground_truth_dict[user] = np.array(ground_truth_sequence,dtype=object)
 	return augmented_sequence_dict, ground_truth_dict
 
-def pad_sequence(input_sequence_dict, max_seq_len):
-	padded_sequence_dict = {}
-	for user in input_sequence_dict.keys():
-		user_sequences = []
-		for seq in input_sequence_dict[user]:
-			seq = np.pad(seq, (0,max_seq_len - len(seq)), 'constant', constant_values=-1,)
-			user_sequences.append(seq)
-		padded_sequence_dict[user] = np.array(user_sequences,dtype=object)
-	return padded_sequence_dict
 
+#generate POI sequences 
 def generate_POI_sequences(input_data, visit_sequence_dict):
 	POI_sequences = []
 	for user in visit_sequence_dict:
@@ -108,13 +79,12 @@ def generate_POI_sequences(input_data, visit_sequence_dict):
 				else: 
 					POI_sequence.append(-1)
 			user_POI_sequences.append(POI_sequence)
-		POI_sequences.append(user_POI_sequences)
-		
+		POI_sequences.append(user_POI_sequences)	
 	reIndexed_POI_sequences, POI_reIndex_mapping = _reIndex_3d_list(np.array(POI_sequences,dtype=object))
 	return reIndexed_POI_sequences, POI_reIndex_mapping
 
 
-
+#generate category sequences 
 def generate_category_sequences(input_data, visit_sequence_dict):
 	cate_sequences = []
 	for user in visit_sequence_dict:
@@ -131,6 +101,8 @@ def generate_category_sequences(input_data, visit_sequence_dict):
 	reIndexed_cate_sequences, cate_reIndex_mapping = _reIndex_3d_list(np.array(cate_sequences,dtype=object))
 	return reIndexed_cate_sequences, cate_reIndex_mapping
 
+
+#generate region sequences 
 def generate_region_sequences(input_data, visit_sequence_dict):
 	region_sequences = []
 	for user in visit_sequence_dict:
@@ -148,6 +120,7 @@ def generate_region_sequences(input_data, visit_sequence_dict):
 	return reIndexed_region_sequences, region_reIndex_mapping
 
 
+#generate time sequences 
 def generate_time_sequences(input_data, visit_sequence_dict):
 	time_sequences = []
 	for user in visit_sequence_dict:
@@ -164,21 +137,22 @@ def generate_time_sequences(input_data, visit_sequence_dict):
 	reIndexed_time_sequences, time_reIndex_mapping = _reIndex_3d_list(np.array(time_sequences,dtype=object))
 	return reIndexed_time_sequences, time_reIndex_mapping
 
+
+#get distance according longitude and latitude
 def get_distance(pos1, pos2):
 	lat1, lon1 = pos1
 	lat2, lon2 = pos2
-	
 	dlat = lat2 - lat1
 	dlon = lon2 - lon1
-	
 	a = math.sin(math.radians(dlat / 2)) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(math.radians(dlon / 2)) ** 2
 	c = 2 * math.asin(math.sqrt(a))
 	r = 6371 
 	h_dist = c * r
-	
 	return h_dist
 
-def generate_dist_sequences(input_data, visit_sequence_dict):
+
+# get distance between POIs
+def generate_POI_dist_sequences(input_data, visit_sequence_dict):
 	dist_sequences = []
 	max_dist = 0
 	for user in visit_sequence_dict:
@@ -203,6 +177,8 @@ def generate_dist_sequences(input_data, visit_sequence_dict):
 		dist_sequences.append(user_dist_sequences)
 	return np.array(dist_sequences), max_dist
 
+
+# get distance between regions
 def generate_region_dist_sequences(input_data, visit_sequence_dict):
 	dist_sequences = []
 	max_dist = 0
@@ -228,6 +204,7 @@ def generate_region_dist_sequences(input_data, visit_sequence_dict):
 	return np.array(dist_sequences), max_dist
 
 
+#reindexed list for each user
 def _reIndex_3d_list(input_list):
 	flat_list = _flatten_3d_list(input_list)
 	index_map = np.unique(flat_list)
@@ -240,23 +217,47 @@ def _reIndex_3d_list(input_list):
 			reIndexed_user_list.append([_old_id_to_new(index_map, poi) if poi != -1 else -1 for poi in seq])	
 		reIndexed_list.append(reIndexed_user_list)
 	reIndexed_list = np.array(reIndexed_list,dtype=object)
-	check_list = _flatten_3d_list(reIndexed_list)
-	if -1 in check_list:
-		check_list = check_list[ check_list >= 0 ]
-	check_is_consecutive(check_list, 0) 
 	return reIndexed_list, index_map
 
+
+#flat list
 def _flatten_3d_list(input_list):
 	twoD_lists = input_list.flatten()
 	return np.hstack([np.hstack(twoD_list) for twoD_list in twoD_lists])
 
+
+#map the original ID to the new ID
 def _old_id_to_new(mapping, old_id):
 	return np.where(mapping == old_id)[0].flat[0]
 
+
+#get the original ID according to the new ID
 def _new_id_to_old(mapping, new_id):
 	return mapping[new_id]
-def check_is_consecutive(check_list, start_index):
-	assert check_list.max() == len(np.unique(check_list)) + start_index - 1, 'ID is not consecutive'
+
+
+# get sequence for original data
+def get_seq(data):
+    cat_counter = collections.Counter(data['Category'])
+    POI_counter = collections.Counter(data['VenueId'])
+    cat_id_mapping = dict(zip(cat_counter.keys(), np.arange(len(cat_counter.keys()))))
+    POI_id_mapping = dict(zip(POI_counter.keys(), np.arange(len(POI_counter.keys()))))
+    data['L2_id'] = data['Category'].apply(lambda x: cat_id_mapping[x])
+    data['Location_id'] = data['VenueId'].apply(lambda x: POI_id_mapping[x])
+    data['hour'] = pd.to_datetime(data['Local_Time_True']).dt.hour
+    visit_sequences, max_seq_len, valid_visits, user_reIndex_mapping = generate_sequence(data, min_seq_len=2, min_seq_num=3)
+    assert bool(visit_sequences), 'no qualified sequence after filtering!' 
+    visit_sequences, ground_truth_dict = aug_sequence(visit_sequences, min_len=3)
+    POI_sequences, POI_reIndex_mapping =generate_POI_sequences(data, visit_sequences)
+    cate_sequences, cate_reIndex_mapping = generate_category_sequences(data, visit_sequences)
+    region_sequences, region_reIndex_mapping = generate_region_sequences(data, visit_sequences)
+    time_sequences, time_reIndex_mapping = generate_time_sequences(data, visit_sequences)
+    POI_dist_sequences, max_dist = generate_POI_dist_sequences(data, visit_sequences)
+    region_dist_sequences, max_dist = generate_region_dist_sequences(data, visit_sequences)
+    return POI_sequences,cate_sequences,region_sequences,time_sequences,POI_dist_sequences,region_dist_sequences
+
+
+#split data into training, validation and testing data
 def get_training_testing(sequence):
     all_training_samples=[]
     all_validation_samples=[]
@@ -282,6 +283,9 @@ def get_training_testing(sequence):
                 all_training_samples.append(user_samples[:-2])
                 all_training_validation_samples.append(user_samples[:-1])
     return all_training_samples,all_validation_samples,all_testing_samples,all_training_validation_samples
+
+
+#split data into training data and groundtruth
 def get_PreTarget(data):
     all_pre_list=[]
     all_traget_list=[]
@@ -294,33 +298,18 @@ def get_PreTarget(data):
         all_pre_list.append(user_pre)
         all_traget_list.append(user_target)
     return all_pre_list,all_traget_list
+
+
+# get training, validation and testing data
 def get_tr_va_te_data(data):
-    print(len(data))
-    cat_counter = collections.Counter(data['Category'])
-    POI_counter = collections.Counter(data['VenueId'])
-    cat_id_mapping = dict(zip(cat_counter.keys(), np.arange(len(cat_counter.keys()))))
-    POI_id_mapping = dict(zip(POI_counter.keys(), np.arange(len(POI_counter.keys()))))
-    data['L2_id'] = data['Category'].apply(lambda x: cat_id_mapping[x])
-    data['Location_id'] = data['VenueId'].apply(lambda x: POI_id_mapping[x])
-    data['hour'] = pd.to_datetime(data['Local_Time_True']).dt.hour
-    visit_sequences, max_seq_len, valid_visits, user_reIndex_mapping = generate_sequence(data, min_seq_len=2, min_seq_num=3)
-    assert bool(visit_sequences), 'no qualified sequence after filtering!' # check if output sequence is empty
-    print(len(visit_sequences))
-    visit_sequences, ground_truth_dict = aug_sequence(visit_sequences, min_len=3)
-    POI_sequences, POI_reIndex_mapping =generate_POI_sequences(data, visit_sequences)
-    cate_sequences, cate_reIndex_mapping = generate_category_sequences(data, visit_sequences)
-    region_sequences, region_reIndex_mapping = generate_region_sequences(data, visit_sequences)
-    time_sequences, time_reIndex_mapping = generate_time_sequences(data, visit_sequences)
-    dist_sequences, max_dist = generate_dist_sequences(data, visit_sequences)
-    region_dist_sequences, max_dist = generate_dist_sequences(data, visit_sequences)
+    POI_sequences,cate_sequences,region_sequences,time_sequences,POI_dist_sequences,region_dist_sequences=get_seq(data)
     POI_training_samples,POI_validation_samples,POI_testing_samples,POI_training_validation_samples=get_training_testing(POI_sequences)
     region_training_samples,region_validation_samples,region_testing_samples,region_training_validation_samples=get_training_testing(region_sequences)
     category_training_samples,category_validation_samples,category_testing_samples,category_training_validation_samples=get_training_testing(cate_sequences)
     time_training_samples,time_validation_samples,time_testing_samples,time_training_validation_samples=get_training_testing(time_sequences)
-    distance_training_samples,distance_validation_samples,distance_testing_samples,distance_training_validation_samples=get_training_testing(dist_sequences)
+    POI_distance_training_samples,POI_distance_validation_samples,POI_distance_testing_samples,POI_distance_training_validation_samples=get_training_testing(POI_dist_sequences)
     regi_distance_training_samples,regi_distance_validation_samples,regi_distance_testing_samples,regi_distance_training_validation_samples=get_training_testing(region_dist_sequences)
-
-
+    
     POI_train_pre,POI_train_target=get_PreTarget(POI_training_samples)
     POI_valid_pre,POI_valid_target=get_PreTarget(POI_validation_samples)
     POI_test_pre,POI_test_target=get_PreTarget(POI_testing_samples)
@@ -341,89 +330,60 @@ def get_tr_va_te_data(data):
     time_test_pre,time_test_target=get_PreTarget(time_testing_samples)
     time_train_valid_pre,time_train_valid_target=get_PreTarget(time_training_validation_samples)
 
-    distance_train_pre,distance_train_target=get_PreTarget(distance_training_samples)
-    distance_valid_pre,distance_valid_target=get_PreTarget(distance_validation_samples)
-    distance_test_pre,distance_test_target=get_PreTarget(distance_testing_samples)
-    distance_train_valid_pre,distance_train_valid_target=get_PreTarget(distance_training_validation_samples)
+    POI_distance_train_pre,POI_distance_train_target=get_PreTarget(POI_distance_training_samples)
+    POI_distance_valid_pre,POI_distance_valid_target=get_PreTarget(POI_distance_validation_samples)
+    POI_distance_test_pre,POI_distance_test_target=get_PreTarget(POI_distance_testing_samples)
+    POI_distance_train_valid_pre,POI_distance_train_valid_target=get_PreTarget(POI_distance_training_validation_samples)
 
     regi_distance_train_pre,regi_distance_train_target=get_PreTarget(regi_distance_training_samples)
     regi_distance_valid_pre,regi_distance_valid_target=get_PreTarget(regi_distance_validation_samples)
     regi_distance_test_pre,regi_distance_test_target=get_PreTarget(regi_distance_testing_samples)
     regi_distance_train_valid_pre,regi_distance_train_valid_target=get_PreTarget(regi_distance_training_validation_samples)
 
-    user_train=(POI_train_pre,POI_train_target,category_train_pre,category_train_target,region_train_pre,region_train_target,time_train_pre,time_train_target,distance_train_pre,distance_train_target,regi_distance_train_pre,regi_distance_train_target)
-    user_valid=(POI_valid_pre,POI_valid_target,category_valid_pre,category_valid_target,region_valid_pre,region_valid_target,time_valid_pre,time_valid_target,distance_valid_pre,distance_valid_target,regi_distance_valid_pre,regi_distance_valid_target)
-    user_train_valid=(POI_train_valid_pre,POI_train_valid_target,category_train_valid_pre,category_train_valid_target,region_train_valid_pre,region_train_valid_target,time_train_valid_pre,time_train_valid_target,distance_train_valid_pre,distance_train_valid_target,regi_distance_train_valid_pre,regi_distance_train_valid_target)
-    user_test=(POI_test_pre,POI_test_target,category_test_pre,category_test_target,region_test_pre,region_test_target,time_test_pre,time_test_target,distance_test_pre,distance_test_target,regi_distance_test_pre,regi_distance_test_target)
-        
+    user_train=(POI_train_pre,POI_train_target,category_train_pre,category_train_target,region_train_pre,region_train_target,time_train_pre,time_train_target,POI_distance_train_pre,POI_distance_train_target,regi_distance_train_pre,regi_distance_train_target)
+    user_valid=(POI_valid_pre,POI_valid_target,category_valid_pre,category_valid_target,region_valid_pre,region_valid_target,time_valid_pre,time_valid_target,POI_distance_valid_pre,POI_distance_valid_target,regi_distance_valid_pre,regi_distance_valid_target)
+    user_train_valid=(POI_train_valid_pre,POI_train_valid_target,category_train_valid_pre,category_train_valid_target,region_train_valid_pre,region_train_valid_target,time_train_valid_pre,time_train_valid_target,POI_distance_train_valid_pre,POI_distance_train_valid_target,regi_distance_train_valid_pre,regi_distance_train_valid_target)
+    user_test=(POI_test_pre,POI_test_target,category_test_pre,category_test_target,region_test_pre,region_test_target,time_test_pre,time_test_target,POI_distance_test_pre,POI_distance_test_target,regi_distance_test_pre,regi_distance_test_target)
+   
     return user_train,user_valid,user_train_valid,user_test
-def flat_list(l):
-    li=[]
-    for i in range(len(l)):
-        for j in range (len(l[i])):
-            li.append(l[i][j])
-    return li
-def region_seq(data):
-    cat_counter = collections.Counter(data['Category'])
-    POI_counter = collections.Counter(data['VenueId'])
-    cat_id_mapping = dict(zip(cat_counter.keys(), np.arange(len(cat_counter.keys()))))
-    POI_id_mapping = dict(zip(POI_counter.keys(), np.arange(len(POI_counter.keys()))))
-    data['L2_id'] = data['Category'].apply(lambda x: cat_id_mapping[x])
-    data['Location_id'] = data['VenueId'].apply(lambda x: POI_id_mapping[x])
-    data['hour'] = pd.to_datetime(data['Local_Time_True']).dt.hour
-    visit_sequences, max_seq_len, valid_visits, user_reIndex_mapping = generate_sequence(data, min_seq_len=2, min_seq_num=3)
-    assert bool(visit_sequences), 'no qualified sequence after filtering!' 
-    visit_sequences, ground_truth_dict = aug_sequence(visit_sequences, min_len=3)
-    POI_sequences, POI_reIndex_mapping =generate_POI_sequences(data, visit_sequences)
-    cate_sequences, cate_reIndex_mapping = generate_category_sequences(data, visit_sequences)
-    region_sequences, region_reIndex_mapping = generate_region_sequences(data, visit_sequences)
-    time_sequences, time_reIndex_mapping = generate_time_sequences(data, visit_sequences)
-    POI_dist_sequences, max_dist = generate_dist_sequences(data, visit_sequences)
-    region_dist_sequences, max_dist = generate_region_dist_sequences(data, visit_sequences)
-    return POI_sequences,cate_sequences,region_sequences,time_sequences,POI_dist_sequences,region_dist_sequences
+
+
+# get the index of same- and cross region for region sequence
 def get_In_Cross_region_seq(region_sequences):
-    group_InRegion_index=[]
+    group_SameRegion_index=[]
     group_CrossRegion_index=[]
     for x in region_sequences:
-        InRegion_index=[]
+        SameRegion_index=[]
         CrossRegion_index=[]
         for i in range(len(x)):
             if len(set(x[i]))==1:
-                InRegion_index.append(i)
+                SameRegion_index.append(i)
             else:
                 CrossRegion_index.append(i)
-        group_InRegion_index.append(InRegion_index)
+        group_SameRegion_index.append(SameRegion_index)
         group_CrossRegion_index.append(CrossRegion_index)
-    return group_InRegion_index,group_CrossRegion_index
+    return group_SameRegion_index,group_CrossRegion_index
 
-def remove_zero_element(data):
-    no_zero=[]
-    for i in range(len(data)):
-        no_zero_data=[]
-        # print('i',i)
-        if i%2==0:
-            for seq in data[i]:
-                b= [seq_item + 1 for seq_item in seq]
-                no_zero_data.append(b)
-        else:
-            no_zero_data= [j + 1 for j in data[i]]
-        no_zero.append(no_zero_data)
-    return(no_zero)
-def flat_list(l):
-    li=[]
-    for i in range(len(l)):
-        #print(l[i])
-        for j in range (len(l[i])):
-            li.append(l[i][j])
-    return li
-def normalize(mx):
-    """Row-normalize sparse matrix"""
-    rowsum = np.array(mx.sum(1))
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
-    r_mat_inv = sp.diags(r_inv)
-    mx = r_mat_inv.dot(mx)
-    return mx 
+
+# get the data of same- and cross-region according to index.
+def get_GroupData(group_SameRegion_index,group_CrossRegion_index,region_sequences):
+	group_data=defaultdict(list)
+	for i in range(len(group_SameRegion_index)):
+		if len(group_SameRegion_index[i])==0:
+			continue
+		else:
+			for j in group_SameRegion_index[i]:
+				group_data[1].append(region_sequences[i][j])
+	for i in range(len(group_CrossRegion_index)):
+		if len(group_CrossRegion_index[i])==0:
+			continue
+		else:
+			for j in group_CrossRegion_index[i]:
+				group_data[2].append(region_sequences[i][j])
+	return group_data
+
+
+# get adjacent matrix
 def get_adj_matrix_InDegree(data,max_item):
     max_node=max_item
     adj_matrix = np.zeros((max_node, max_node))#
@@ -434,6 +394,19 @@ def get_adj_matrix_InDegree(data,max_item):
     adj_matrix=normalize(adj_matrix + sp.eye(adj_matrix.shape[0]))
     return adj_matrix.toarray()
 
+
+#normalization for the row of get adjacent matrix
+def normalize(mx):
+    """Row-normalize sparse matrix"""
+    rowsum = np.array(mx.sum(1))
+    r_inv = np.power(rowsum, -1).flatten()
+    r_inv[np.isinf(r_inv)] = 0.
+    r_mat_inv = sp.diags(r_inv)
+    mx = r_mat_inv.dot(mx)
+    return mx 
+
+
+# save adjacent matrix
 def get_adj_matrix_InDegree_txt(train_data,train_valid_data,test_data):
     all_i=flat_list(train_valid_data[0])+train_valid_data[1]+flat_list(test_data[0])+test_data[1]
     POI_n_node=max(np.unique(flat_list(all_i)))+2
@@ -444,36 +417,8 @@ def get_adj_matrix_InDegree_txt(train_data,train_valid_data,test_data):
     POI_adj_train_valid=get_adj_matrix_InDegree(train_valid_data[0],POI_n_node)
     POI_adj_train=get_adj_matrix_InDegree(train_data[0],POI_n_node)
     return POI_adj_train_valid,POI_adj_train
-def get_GroupData(data_sanmeR_index,data):
-	group_data=defaultdict(list)
-	for i in range(len(data_sanmeR_index)):
-		if len(data_sanmeR_index[i])==0:
-			continue
-		else:
-			for j in data_sanmeR_index[i]:
-				group_data[1].append(data[i][j])
-	return group_data
 
-
-
-def trans_to_cuda(variable):
-    if torch.cuda.is_available():
-        return variable.cuda()
-    else:
-        return variable
-
-def trans_to_cpu(variable):
-    if torch.cuda.is_available():
-        return variable.cpu()
-    else:
-        return variable
-
-def data_masks(all_usr_pois, item_tail):
-    us_lens = [len(upois) for upois in all_usr_pois]
-    len_max = max(us_lens)
-    us_pois = [upois + item_tail * (len_max - le) for upois, le in zip(all_usr_pois, us_lens)]
-    us_msks = [[1] * le + [0] * (len_max - le) for le in us_lens]
-    return us_pois, us_msks, len_max
+#data starts at element 1
 def remove_zero_element(data):
     no_zero=[]
     for i in range(len(data)):
@@ -487,24 +432,27 @@ def remove_zero_element(data):
         no_zero.append(no_zero_data)
     return(no_zero)
 
-
+# flat list
 def flat_list(l):
     li=[]
     for i in range(len(l)):
-        #print(l[i])
         for j in range (len(l[i])):
             li.append(l[i][j])
     return li
 
+
+#data mask 
 def data_masks(all_usr_pois, item_tail):
     us_lens = [len(upois) for upois in all_usr_pois]
     len_max = max(us_lens)
     us_pois = [upois + item_tail * (len_max - le) for upois, le in zip(all_usr_pois, us_lens)]
     us_msks = [[1] * le + [0] * (len_max - le) for le in us_lens]
     return us_pois, us_msks, len_max
+
+
+#dataset formatter for POI, category, region data
 class Data():
     def __init__(self, data, shuffle=False):
-
         inputs = data[0]
         inputs, mask, len_max = data_masks(inputs, [0])
         self.inputs = np.asarray(inputs)
@@ -533,10 +481,9 @@ class Data():
         return mask, targets,inputs
 
 
-
+#dataset formatter for same- and cross-region data
 class Data_GroupLabel():
     def __init__(self, data, shuffle=False):
-
         inputs = data
         self.inputs = np.asarray(inputs)
         self.length = len(inputs)
@@ -557,3 +504,17 @@ class Data_GroupLabel():
     def get_slice(self, i):
         inputs= self.inputs[i]
         return inputs
+
+
+def trans_to_cuda(variable):
+    if torch.cuda.is_available():
+        return variable.cuda()
+    else:
+        return variable
+
+
+def trans_to_cpu(variable):
+    if torch.cuda.is_available():
+        return variable.cpu()
+    else:
+        return variable
