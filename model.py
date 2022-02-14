@@ -33,14 +33,17 @@ class PositionEmbedding(nn.Module):
         self.embedding_dim = embedding_dim
         self.mode = mode
         self.weight = nn.Parameter(torch.Tensor(num_embeddings, embedding_dim))
+        
     def reset_parameters(self):
         torch.nn.init.xavier_normal_(self.weight)
+        
     def forward(self, x):
         batch_size, seq_len = x.size()[:2]
         embeddings = self.weight[:seq_len, :].view(1, seq_len, self.embedding_dim)
         if self.mode == self.MODE_ADD:
             return x + embeddings
         raise NotImplementedError('Unknown mode: %s' % self.mode)
+        
     def extra_repr(self):
         return 'num_embeddings={}, embedding_dim={}, mode={}'.format(
             self.num_embeddings, self.embedding_dim, self.mode,
@@ -133,11 +136,13 @@ class Model(Module):
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=50, gamma=0.1)
         self.reset_parameters()    
+        
     #parameter initialization    
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)
         for weight in self.parameters():
             weight.data.uniform_(-stdv, stdv)       
+            
     #get scores of POI, category, and region channels
     def get_channel_scores(self,POI_hidden, POI_mask,cate_hidden,cate_mask,regi_hidden,regi_mask,group_label_inputs):
         POI_attn_output = POI_hidden
@@ -260,6 +265,8 @@ def forward(model, i,POI_adj_matrix,POI_data,cate_data,regi_data,time_data,POI_d
     #get different channel scores
     POI_score_result,cate_score_result,regi_score_result=model.get_channel_scores(POI_seq_hidden, POI_mask,cate_seq_hidden, cate_mask,regi_seq_hidden, regi_mask,group_label_inputs)
     return POI_groundtruth, POI_score_result,cate_groundtruth, cate_score_result,regi_groundtruth, regi_score_result,group_label_inputs
+
+
 def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_data,cate_test_data,regi_train_data,regi_test_data,time_train_data,time_test_data,POI_dist_train_data,POI_dist_test_data,regi_dist_train_data,regi_dist_test_data,group_label_train_valid,group_label_test):
     model.scheduler.step()
     print('start training: ', datetime.datetime.now())
