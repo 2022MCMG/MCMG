@@ -5,7 +5,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', default='CAL', help='dataset name')
     parser.add_argument('--batch_size', type=int, default=512, help='batch size')
-    parser.add_argument('--hidden_size', type=int, default=150, help='the size of embeddings')
+    parser.add_argument('--hidden_size', type=int, default=180, help='the size of embeddings')
     parser.add_argument('--epoch', type=int, default=50, help='the number of epochs')
     parser.add_argument('--lr', type=float, default=0.004, help='learning rate')  
     parser.add_argument('--l2', type=float, default=0.0001, help='L2 regularization coefficient')
