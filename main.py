@@ -7,8 +7,9 @@ from utils import *
 from model import *
 from parameter_setting import parse_args
 args = parse_args()
+
+
 def main():
- 
     if args.dataset == 'CAL':
         train_data = pickle.load(open('./dataset/train_CAL.txt', 'rb'))
         test_data = pickle.load(open('./dataset/test_CAL.txt', 'rb'))
@@ -86,8 +87,8 @@ def main():
     end = time.time()
     print("Run time: %f s" % (end - start))
 
+    
 if __name__ == '__main__':
-   
     result_log_path = './test_log/'
     if not os.path.exists(result_log_path):
         os.makedirs(result_log_path)
