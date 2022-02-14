@@ -2,7 +2,7 @@
 
 This repository is the implementation of MCMG.
 
-MCMG is short for 'A <u>M</u>ulti-<u>C</u>hannel Next POI Recommendation Framework with <u>M</u>ulti-<u>G</u>ranularity Check-in Signals'. It is a novel framework, equipped with three modules (i.e., global user behavior encoder, local multi-channel encoder, and region-aware weighting strategy), which is designed to achieve the next POI prediction by fusing multi-granularity check-in signals from two orthogonal perspectives, i.e., fine-coarse grained check-ins at either POI/region level or local/global level.
+MCMG is short for 'A **M**ulti-**C**hannel Next POI Recommendation Framework with **M**ulti-**G**ranularity Check-in Signals'. It is a novel framework, equipped with three modules (i.e., global user behavior encoder, local multi-channel encoder, and region-aware weighting strategy), which is designed to achieve the next POI prediction by fusing multi-granularity check-in signals from two orthogonal perspectives, i.e., fine-coarse grained check-ins at either POI/region level or local/global level.
 
 
 ### File Descriptions
