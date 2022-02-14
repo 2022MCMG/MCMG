@@ -11,7 +11,7 @@ from collections import defaultdict
 import progressbar
 
 
-# generate valid sequence for original data
+#generate valid sequence for original data
 def generate_sequence(input_data, min_seq_len, min_seq_num):
 	bar = progressbar.ProgressBar(maxval=input_data.index[-1], widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
 	input_data['Local_sg_time'] = pd.to_datetime(input_data['Local_Time_True'])
@@ -151,7 +151,7 @@ def get_distance(pos1, pos2):
 	return h_dist
 
 
-# get distance between POIs
+#get distance between POIs
 def generate_POI_dist_sequences(input_data, visit_sequence_dict):
 	dist_sequences = []
 	max_dist = 0
@@ -177,7 +177,7 @@ def generate_POI_dist_sequences(input_data, visit_sequence_dict):
 	return np.array(dist_sequences), max_dist
 
 
-# get distance between regions
+#get distance between regions
 def generate_region_dist_sequences(input_data, visit_sequence_dict):
 	dist_sequences = []
 	max_dist = 0
@@ -235,7 +235,7 @@ def _new_id_to_old(mapping, new_id):
 	return mapping[new_id]
 
 
-# get sequence for original data
+#get sequence for original data
 def get_seq(data):
     cat_counter = collections.Counter(data['Category'])
     POI_counter = collections.Counter(data['VenueId'])
@@ -299,7 +299,7 @@ def get_PreTarget(data):
     return all_pre_list,all_traget_list
 
 
-# get training, validation and testing data
+#get training, validation and testing data
 def get_tr_va_te_data(data):
     POI_sequences,cate_sequences,region_sequences,time_sequences,POI_dist_sequences,region_dist_sequences=get_seq(data)
     POI_training_samples,POI_validation_samples,POI_testing_samples,POI_training_validation_samples=get_training_testing(POI_sequences)
@@ -347,7 +347,7 @@ def get_tr_va_te_data(data):
     return user_train,user_valid,user_train_valid,user_test
 
 
-# get the index of same- and cross region for region sequence
+#get the index of same- and cross region for region sequence
 def get_In_Cross_region_seq(region_sequences):
     group_SameRegion_index=[]
     group_CrossRegion_index=[]
@@ -364,7 +364,7 @@ def get_In_Cross_region_seq(region_sequences):
     return group_SameRegion_index,group_CrossRegion_index
 
 
-# get the data of same- and cross-region according to index.
+#get the data of same- and cross-region according to index.
 def get_GroupData(group_SameRegion_index,group_CrossRegion_index,region_sequences):
 	group_data=defaultdict(list)
 	for i in range(len(group_SameRegion_index)):
@@ -382,7 +382,7 @@ def get_GroupData(group_SameRegion_index,group_CrossRegion_index,region_sequence
 	return group_data
 
 
-# get adjacent matrix
+#get adjacent matrix
 def get_adj_matrix_InDegree(data,max_item):
     max_node=max_item
     adj_matrix = np.zeros((max_node, max_node))#
@@ -405,7 +405,7 @@ def normalize(mx):
     return mx 
 
 
-# save adjacent matrix
+#save adjacent matrix
 def get_adj_matrix_InDegree_txt(train_data,train_valid_data,test_data):
     all_i=flat_list(train_valid_data[0])+train_valid_data[1]+flat_list(test_data[0])+test_data[1]
     POI_n_node=max(np.unique(flat_list(all_i)))+2
@@ -431,7 +431,7 @@ def remove_zero_element(data):
         no_zero.append(no_zero_data)
     return(no_zero)
 
-# flat list
+#flat list
 def flat_list(l):
     li=[]
     for i in range(len(l)):
