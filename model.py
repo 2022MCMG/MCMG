@@ -6,17 +6,21 @@ import numpy as np
 import scipy.sparse as sp
 import torch.nn.functional as F
 import datetime
+
 def trans_to_cpu(variable):
     if torch.cuda.is_available():
         return variable.cpu()
     else:
         return variable
+    
+    
 def trans_to_cuda(variable):
     if torch.cuda.is_available():
         return variable.cuda()
     else:
         return variable
 
+    
 #position embedding
 class PositionEmbedding(nn.Module):
     MODE_ADD = 'MODE_ADD'
@@ -31,7 +35,6 @@ class PositionEmbedding(nn.Module):
         self.weight = nn.Parameter(torch.Tensor(num_embeddings, embedding_dim))
     def reset_parameters(self):
         torch.nn.init.xavier_normal_(self.weight)
-
     def forward(self, x):
         batch_size, seq_len = x.size()[:2]
         embeddings = self.weight[:seq_len, :].view(1, seq_len, self.embedding_dim)
@@ -43,6 +46,7 @@ class PositionEmbedding(nn.Module):
             self.num_embeddings, self.embedding_dim, self.mode,
         )
 
+    
 # GCN molule
 class GCN(Module):
     def __init__(self,hidden_size, step,dropout):
@@ -66,12 +70,11 @@ class GCN(Module):
             hidden = self.GCNCell(A, hidden)
         return hidden
 
+    
 #a point-wise two-layer feed-forwardnetwork
 class PointWiseFeedForward(torch.nn.Module):
     def __init__(self, hidden_size, dropout_rate):
-
         super(PointWiseFeedForward, self).__init__()
-
         self.conv1 = torch.nn.Conv1d(hidden_size, hidden_size, kernel_size=1)
         self.dropout1 = torch.nn.Dropout(p=dropout_rate)
         self.relu = torch.nn.ReLU()
@@ -83,7 +86,8 @@ class PointWiseFeedForward(torch.nn.Module):
         outputs = outputs.transpose(-1, -2) 
         outputs += inputs
         return outputs
-    
+  
+
 # MCMG model
 class Model(Module):
     def __init__(self,hidden_size,lr,l2,step,n_head,k_blocks,args,POI_n_node, cate_n_node,regi_n_node,time_n_node,POI_dist_n_node,regi_dist_n_node,len_max):
@@ -128,12 +132,12 @@ class Model(Module):
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=50, gamma=0.1)
-        self.reset_parameters()
+        self.reset_parameters()    
     #parameter initialization    
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)
         for weight in self.parameters():
-            weight.data.uniform_(-stdv, stdv)
+            weight.data.uniform_(-stdv, stdv)       
     #get scores of POI, category, and region channels
     def get_channel_scores(self,POI_hidden, POI_mask,cate_hidden,cate_mask,regi_hidden,regi_mask,group_label_inputs):
         POI_attn_output = POI_hidden
@@ -192,6 +196,7 @@ class Model(Module):
         hidden_POI_gcn = self.gcn(POI_A, hidden_POI)
         return hidden_POI_gcn,hidden_cate,hidden_regi,hidden_time,hidden_POI_dist,hidden_regi_dist
 
+    
 def forward(model, i,POI_adj_matrix,POI_data,cate_data,regi_data,time_data,POI_dist_data,regi_dist_data,group_label):
     POI_mask, POI_groundtruth,POI_inputs = POI_data.get_slice(i)
     cate_mask, cate_groundtruth,cate_inputs = cate_data.get_slice(i)
@@ -322,16 +327,6 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         regi_sub_items_9 = trans_to_cpu(regi_sub_items_9).detach().numpy() 
         #########################group performance###############################
         #top 1
-        #POI
-        for i in range(len(POI_groundtruth)):
-            if group_label_inputs[i]==1:
-                g1_POI_HR_1.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_1[i][:]))
-            elif group_label_inputs[i]==2:
-                g2_POI_HR_1.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_1[i][:]))
-            else:
-                raise ValueError(f'Invalid group label')
-        POI_g1_NDCG_i=0
-        POI_g2_NDCG_i=0
         POI_g1_groundtruth_num=0
         cate_g1_groundtruth_num=0
         regi_g1_groundtruth_num=0
@@ -348,8 +343,17 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                 cate_g2_groundtruth_num=cate_g2_groundtruth_num+1
                 regi_g2_groundtruth_num=regi_g2_groundtruth_num+1
             else:
-                raise ValueError(f'Invalid group label')
+                raise ValueError(f'Invalid group label')           
         #POI
+        for i in range(len(POI_groundtruth)):
+            if group_label_inputs[i]==1:
+                g1_POI_HR_1.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_1[i][:]))
+            elif group_label_inputs[i]==2:
+                g2_POI_HR_1.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_1[i][:]))
+            else:
+                raise ValueError(f'Invalid group label')
+        POI_g1_NDCG_i=0
+        POI_g2_NDCG_i=0
         for i in range(len(POI_sub_items_1)):
             for j in range(len(POI_sub_items_1[i])):
                 if ((POI_groundtruth[i]-1)==POI_sub_items_1[i][j]) and (group_label_inputs[i]==1): 
@@ -436,7 +440,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         POI_g1_NDCG_i_5/=POI_g1_groundtruth_num
         g1_POI_NDCG_5.append(POI_g1_NDCG_i_5)  
         POI_g2_NDCG_i_5/=POI_g2_groundtruth_num
-        g2_POI_NDCG_5.append(POI_g2_NDCG_i_5)   
+        g2_POI_NDCG_5.append(POI_g2_NDCG_i_5) 
         #category
         for i in range(len(cate_groundtruth)):
             if group_label_inputs[i]==1:
@@ -460,7 +464,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         cate_g1_NDCG_i_5/=cate_g1_groundtruth_num
         g1_cate_NDCG_5.append(cate_g1_NDCG_i_5)  
         cate_g2_NDCG_i_5/=cate_g2_groundtruth_num
-        g2_cate_NDCG_5.append(cate_g2_NDCG_i_5)     
+        g2_cate_NDCG_5.append(cate_g2_NDCG_i_5)   
         #region
         for i in range(len(regi_groundtruth)):
             if group_label_inputs[i]==1:
@@ -509,7 +513,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         g1_NDCG_i_10/=POI_g1_groundtruth_num
         g1_POI_NDCG_10.append(g1_NDCG_i_10)  
         g2_NDCG_i_10/=POI_g2_groundtruth_num
-        g2_POI_NDCG_10.append(g2_NDCG_i_10)      
+        g2_POI_NDCG_10.append(g2_NDCG_i_10)
         #category
         for i in range(len(cate_groundtruth)):
             if group_label_inputs[i]==1:
@@ -533,7 +537,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         cate_g1_NDCG_i_10/=cate_g1_groundtruth_num
         g1_cate_NDCG_10.append(cate_g1_NDCG_i_10)  
         cate_g2_NDCG_i_10/=cate_g2_groundtruth_num
-        g2_cate_NDCG_10.append(cate_g2_NDCG_i_10)     
+        g2_cate_NDCG_10.append(cate_g2_NDCG_i_10)      
         #region
         for i in range(len(regi_groundtruth)):
             if group_label_inputs[i]==1:
@@ -593,6 +597,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
     g1_cate_NDCG_10=np.mean(g1_cate_NDCG_10)
     g1_regi_HR_10 = np.mean(g1_regi_HR_10) 
     g1_regi_NDCG_10=np.mean(g1_regi_NDCG_10)
+    
     g2_POI_HR_10 = np.mean(g2_POI_HR_10) 
     g2_POI_NDCG_10=np.mean(g2_POI_NDCG_10)
     g2_cate_HR_10 = np.mean(g2_cate_HR_10) 
