@@ -303,9 +303,9 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         POI_sub_items_1 = POI_scores.topk(1)[1]
         POI_sub_items_5 = POI_scores.topk(5)[1]
         POI_sub_items_10 = POI_scores.topk(10)[1]     
-        POI_sub_items_1 = trans_to_cpu(sub_items_1).detach().numpy()
-        POI_sub_items_5 = trans_to_cpu(sub_items_5).detach().numpy()
-        POI_sub_items_10 = trans_to_cpu(sub_items_10).detach().numpy()
+        POI_sub_items_1 = trans_to_cpu(POI_sub_items_1).detach().numpy()
+        POI_sub_items_5 = trans_to_cpu(POI_sub_items_5).detach().numpy()
+        POI_sub_items_10 = trans_to_cpu(POI_sub_items_10).detach().numpy()
         #category
         cate_sub_items_1 = cate_scores.topk(1)[1]
         cate_sub_items_5 = cate_scores.topk(5)[1]
@@ -416,20 +416,19 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         #POI
         for i in range(len(POI_groundtruth)):
             if group_label_inputs[i]==1:
-                g1_POI_HR_5.append(np.isin(POI_groundtruth[i]-1, sub_items_5[i][:]))
+                g1_POI_HR_5.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_5[i][:]))
             elif group_label_inputs[i]==2:
-                g2_POI_HR_5.append(np.isin(POI_groundtruth[i]-1, sub_items_5[i][:]))
+                g2_POI_HR_5.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_5[i][:]))
             else:
                 raise ValueError(f'Invalid group label')
         POI_g1_NDCG_i_5=0
         POI_g2_NDCG_i_5=0
-        Len_T = len(POI_groundtruth)
-        for i in range(len(sub_items_5)):
-            for j in range(len(sub_items_5[i])):
-                if ((POI_groundtruth[i]-1)==sub_items_5[i][j]) and (group_label_inputs[i]==1): 
+        for i in range(len(POI_sub_items_5)):
+            for j in range(len(POI_sub_items_5[i])):
+                if ((POI_groundtruth[i]-1)==POI_sub_items_5[i][j]) and (group_label_inputs[i]==1): 
                     POI_g1_NDCG_i_5+=1/(math.log2(1+j+1))
                     break
-                if ((POI_groundtruth[i]-1)==sub_items_5[i][j]) and (group_label_inputs[i]==2): 
+                if ((POI_groundtruth[i]-1)==POI_sub_items_5[i][j]) and (group_label_inputs[i]==2): 
                     POI_g2_NDCG_i_5+=1/(math.log2(1+j+1))
                     break
                 else:
@@ -490,19 +489,19 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
         #POI
         for i in range(len(POI_groundtruth)):
             if group_label_inputs[i]==1:
-                g1_POI_HR_10.append(np.isin(POI_groundtruth[i]-1, sub_items_10[i][:]))
+                g1_POI_HR_10.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_10[i][:]))
             elif group_label_inputs[i]==2:
-                g2_POI_HR_10.append(np.isin(POI_groundtruth[i]-1, sub_items_10[i][:]))
+                g2_POI_HR_10.append(np.isin(POI_groundtruth[i]-1, POI_sub_items_10[i][:]))
             else:
                 raise ValueError(f'Invalid group label')
         g1_NDCG_i_10=0
         g2_NDCG_i_10=0
-        for i in range(len(sub_items_10)):
-            for j in range(len(sub_items_10[i])):
-                if ((POI_groundtruth[i]-1)==sub_items_10[i][j]) and (group_label_inputs[i]==1): 
+        for i in range(len(POI_sub_items_10)):
+            for j in range(len(POI_sub_items_10[i])):
+                if ((POI_groundtruth[i]-1)==POI_sub_items_10[i][j]) and (group_label_inputs[i]==1): 
                     g1_NDCG_i_10+=1/(math.log2(1+j+1))
                     break
-                elif ((POI_groundtruth[i]-1)==sub_items_10[i][j]) and (group_label_inputs[i]==2): 
+                elif ((POI_groundtruth[i]-1)==POI_sub_items_10[i][j]) and (group_label_inputs[i]==2): 
                     g2_NDCG_i_10+=1/(math.log2(1+j+1))
                     break
                 else:
