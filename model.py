@@ -131,7 +131,6 @@ class Model(Module):
         self.pe = PositionEmbedding(len_max, self.hidden_size)
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.l2)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=50, gamma=0.1)
         self.reset_parameters()    
     #parameter initialization    
     def reset_parameters(self):
@@ -261,7 +260,6 @@ def forward(model, i,POI_adj_matrix,POI_data,cate_data,regi_data,time_data,POI_d
     POI_score_result,cate_score_result,regi_score_result=model.get_channel_scores(POI_seq_hidden, POI_mask,cate_seq_hidden, cate_mask,regi_seq_hidden, regi_mask,group_label_inputs)
     return POI_groundtruth, POI_score_result,cate_groundtruth, cate_score_result,regi_groundtruth, regi_score_result,group_label_inputs
 def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_data,cate_test_data,regi_train_data,regi_test_data,time_train_data,time_test_data,POI_dist_train_data,POI_dist_test_data,regi_dist_train_data,regi_dist_test_data,group_label_train_valid,group_label_test):
-    model.scheduler.step()
     print('start training: ', datetime.datetime.now())
     model.train()
     total_loss = 0.0
