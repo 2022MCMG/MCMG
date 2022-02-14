@@ -42,28 +42,27 @@ def main():
     regi_dist_test_data = Data(test_data[10:12], shuffle=False)
     model=trans_to_cuda(Model(args.hidden_size,args.lr,args.l2,args.step,args.n_head,args.k_blocks,args,POI_n_node,cate_n_node,regi_n_node,time_n_node, POI_dist_n_node,regi_dist_n_node,max(POI_train_data.len_max, POI_test_data.len_max)))
     start = time.time()
-    best_result = [0, 0,0,0,0,0]
-    best_epoch = [0, 0,0,0,0,0]
+    best_result = [0,0]
+    best_epoch = [0,0]
     bad_counter = 0
     for epoch in range(args.epoch):
         print('-------------------------------------------------------')
         print('epoch: ', epoch)
         g1_POI_HR_1,g1_POI_HR_5,g1_POI_HR_10,g1_POI_NDCG_1,g1_POI_NDCG_5,g1_POI_NDCG_10,g1_cate_HR_1,g1_cate_HR_5,g1_cate_HR_10,g1_cate_NDCG_1,g1_cate_NDCG_5,g1_cate_NDCG_10,g1_regi_HR_1,g1_regi_HR_5,g1_regi_HR_10,g1_regi_NDCG_1,g1_regi_NDCG_5,g1_regi_NDCG_10,g2_POI_HR_1,g2_POI_HR_5,g2_POI_HR_10,g2_POI_NDCG_1,g2_POI_NDCG_5,g2_POI_NDCG_10,g2_cate_HR_1,g2_cate_HR_5,g2_cate_HR_10,g2_cate_NDCG_1,g2_cate_NDCG_5,g2_cate_NDCG_10,g2_regi_HR_1,g2_regi_HR_5,g2_regi_HR_10,g2_regi_NDCG_1,g2_regi_NDCG_5,g2_regi_NDCG_10= train_test(model, POI_adj_matrix,POI_train_data, POI_test_data,cate_train_data,cate_test_data,regi_train_data,regi_test_data,time_train_data,time_test_data,POI_dist_train_data,POI_dist_test_data,regi_dist_train_data,regi_dist_test_data,group_label_train,group_label_test)
         flag = 0
-        if g1_POI_NDCG_10 >= best_result[2]:
-            best_result[2] = g1_POI_NDCG_10
-            best_epoch[2] = epoch
+        if g1_POI_NDCG_10 >= best_result[0]:
+            best_result[0] = g1_POI_NDCG_10
+            best_epoch[0] = epoch
             flag = 1
-        if g2_POI_NDCG_10 >= best_result[5]:
-            best_result[5] = g2_POI_NDCG_10
-            best_epoch[5] = epoch
+        if g2_POI_NDCG_10 >= best_result[1]:
+            best_result[1] = g2_POI_NDCG_10
+            best_epoch[1] = epoch
             flag = 1
         tmp_metric = np.array([g1_POI_HR_1,g1_POI_HR_5,g1_POI_HR_10,g1_POI_NDCG_1,g1_POI_NDCG_5,g1_POI_NDCG_10,g1_cate_HR_1,g1_cate_HR_5,g1_cate_HR_10,g1_cate_NDCG_1,g1_cate_NDCG_5,g1_cate_NDCG_10,g1_regi_HR_1,g1_regi_HR_5,g1_regi_HR_10,g1_regi_NDCG_1,g1_regi_NDCG_5,g1_regi_NDCG_10,g2_POI_HR_1,g2_POI_HR_5,g2_POI_HR_10,g2_POI_NDCG_1,g2_POI_NDCG_5,g2_POI_NDCG_10,g2_cate_HR_1,g2_cate_HR_5,g2_cate_HR_10,g2_cate_NDCG_1,g2_cate_NDCG_5,g2_cate_NDCG_10,g2_regi_HR_1,g2_regi_HR_5,g2_regi_HR_10,g2_regi_NDCG_1,g2_regi_NDCG_5,g2_regi_NDCG_10])
         tmp_metric = [f'{mt:.4f}' for mt in tmp_metric]
         line = ','.join(tmp_metric) + '\n'
         f.write(line)
         f.flush()
-        print('Best Result:')
         bad_counter += 1 - flag
         if bad_counter >= args.patience:
             break
