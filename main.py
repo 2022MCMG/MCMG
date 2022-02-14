@@ -50,25 +50,9 @@ def main():
         print('epoch: ', epoch)
         g1_POI_HR_1,g1_POI_HR_5,g1_POI_HR_10,g1_POI_NDCG_1,g1_POI_NDCG_5,g1_POI_NDCG_10,g1_cate_HR_1,g1_cate_HR_5,g1_cate_HR_10,g1_cate_NDCG_1,g1_cate_NDCG_5,g1_cate_NDCG_10,g1_regi_HR_1,g1_regi_HR_5,g1_regi_HR_10,g1_regi_NDCG_1,g1_regi_NDCG_5,g1_regi_NDCG_10,g2_POI_HR_1,g2_POI_HR_5,g2_POI_HR_10,g2_POI_NDCG_1,g2_POI_NDCG_5,g2_POI_NDCG_10,g2_cate_HR_1,g2_cate_HR_5,g2_cate_HR_10,g2_cate_NDCG_1,g2_cate_NDCG_5,g2_cate_NDCG_10,g2_regi_HR_1,g2_regi_HR_5,g2_regi_HR_10,g2_regi_NDCG_1,g2_regi_NDCG_5,g2_regi_NDCG_10= train_test(model, POI_adj_matrix,POI_train_data, POI_test_data,cate_train_data,cate_test_data,regi_train_data,regi_test_data,time_train_data,time_test_data,POI_dist_train_data,POI_dist_test_data,regi_dist_train_data,regi_dist_test_data,group_label_train,group_label_test)
         flag = 0
-        if g1_POI_NDCG_1 >= best_result[0]:
-            best_result[0] = g1_POI_NDCG_1
-            best_epoch[0] = epoch
-            flag = 1
-        if g1_POI_NDCG_5 >= best_result[1]:
-            best_result[1] = g1_POI_NDCG_5
-            best_epoch[1] = epoch
-            flag = 1
         if g1_POI_NDCG_10 >= best_result[2]:
             best_result[2] = g1_POI_NDCG_10
             best_epoch[2] = epoch
-            flag = 1
-        if g2_POI_NDCG_1 >= best_result[3]:
-            best_result[3] = g2_POI_NDCG_1
-            best_epoch[3] = epoch
-            flag = 1
-        if g2_POI_NDCG_5 >= best_result[4]:
-            best_result[4] = g2_POI_NDCG_5
-            best_epoch[4] = epoch
             flag = 1
         if g2_POI_NDCG_10 >= best_result[5]:
             best_result[5] = g2_POI_NDCG_10
