@@ -11,11 +11,11 @@ args = parse_args()
 
 def main():
     if args.dataset == 'CAL':
-        train_data = pickle.load(open('./dataset/train_CAL.txt', 'rb'))
-        test_data = pickle.load(open('./dataset/test_CAL.txt', 'rb'))
-        group_label_train=pickle.load(open('./dataset/train_group_label.txt', 'rb'))
-        group_label_test=pickle.load(open('./dataset/test_group_label.txt', 'rb'))
-        POI_adj_matrix = pickle.load(open('./dataset/AdjacentMatrix.txt', 'rb'))
+        train_data = pickle.load(open('./dataset/CAL/train_CAL.txt', 'rb'))
+        test_data = pickle.load(open('./dataset/CAL/test_CAL.txt', 'rb'))
+        group_label_train=pickle.load(open('./dataset/CAL/train_group_label_CAL.txt', 'rb'))
+        group_label_test=pickle.load(open('./dataset/CAL/test_group_label_CAL.txt', 'rb'))
+        POI_adj_matrix = pickle.load(open('./dataset/CAL/AdjacentMatrix_CAL.txt', 'rb'))
         POI_n_node=579
         cate_n_node=149
         regi_n_node=10
