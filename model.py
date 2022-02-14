@@ -33,24 +33,21 @@ class PositionEmbedding(nn.Module):
         self.embedding_dim = embedding_dim
         self.mode = mode
         self.weight = nn.Parameter(torch.Tensor(num_embeddings, embedding_dim))
-        
     def reset_parameters(self):
         torch.nn.init.xavier_normal_(self.weight)
-        
     def forward(self, x):
         batch_size, seq_len = x.size()[:2]
         embeddings = self.weight[:seq_len, :].view(1, seq_len, self.embedding_dim)
         if self.mode == self.MODE_ADD:
             return x + embeddings
         raise NotImplementedError('Unknown mode: %s' % self.mode)
-        
     def extra_repr(self):
         return 'num_embeddings={}, embedding_dim={}, mode={}'.format(
             self.num_embeddings, self.embedding_dim, self.mode,
         )
 
     
-#GCN molule
+# GCN molule
 class GCN(Module):
     def __init__(self,hidden_size, step,dropout):
         super(GCN, self).__init__()
@@ -91,7 +88,7 @@ class PointWiseFeedForward(torch.nn.Module):
         return outputs
   
 
-#MCMG model
+# MCMG model
 class Model(Module):
     def __init__(self,hidden_size,lr,l2,step,n_head,k_blocks,args,POI_n_node, cate_n_node,regi_n_node,time_n_node,POI_dist_n_node,regi_dist_n_node,len_max):
         super(Model, self).__init__()
@@ -136,13 +133,11 @@ class Model(Module):
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=50, gamma=0.1)
         self.reset_parameters()    
-        
     #parameter initialization    
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)
         for weight in self.parameters():
             weight.data.uniform_(-stdv, stdv)       
-            
     #get scores of POI, category, and region channels
     def get_channel_scores(self,POI_hidden, POI_mask,cate_hidden,cate_mask,regi_hidden,regi_mask,group_label_inputs):
         POI_attn_output = POI_hidden
@@ -265,8 +260,6 @@ def forward(model, i,POI_adj_matrix,POI_data,cate_data,regi_data,time_data,POI_d
     #get different channel scores
     POI_score_result,cate_score_result,regi_score_result=model.get_channel_scores(POI_seq_hidden, POI_mask,cate_seq_hidden, cate_mask,regi_seq_hidden, regi_mask,group_label_inputs)
     return POI_groundtruth, POI_score_result,cate_groundtruth, cate_score_result,regi_groundtruth, regi_score_result,group_label_inputs
-
-
 def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_data,cate_test_data,regi_train_data,regi_test_data,time_train_data,time_test_data,POI_dist_train_data,POI_dist_test_data,regi_dist_train_data,regi_dist_test_data,group_label_train_valid,group_label_test):
     model.scheduler.step()
     print('start training: ', datetime.datetime.now())
@@ -366,11 +359,11 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                 if ((POI_groundtruth[i]-1)==POI_sub_items_1[i][j]) and (group_label_inputs[i]==1): 
                     POI_g1_NDCG_i+=1/(math.log2(1+j+1))
                     break
-                elif ((POI_groundtruth[i]-1)==POI_sub_items_1[i][j]) and (group_label_inputs[i]==2): 
+                elif ((POI_groundtruth[i]-1)==POI_sub_items_1[i][j]) and (group_label_inputs[i]==2):
                     POI_g2_NDCG_i+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         POI_g1_NDCG_i/=POI_g1_groundtruth_num
         g1_POI_NDCG_1.append(POI_g1_NDCG_i)
         POI_g2_NDCG_i/=POI_g2_groundtruth_num
@@ -394,7 +387,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     cate_g2_NDCG_i+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')   
+                    continue 
         cate_g1_NDCG_i/=cate_g1_groundtruth_num
         g1_cate_NDCG_1.append(cate_g1_NDCG_i)  
         cate_g2_NDCG_i/=cate_g2_groundtruth_num
@@ -418,7 +411,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     regi_g2_NDCG_i+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         regi_g1_NDCG_i/=regi_g1_groundtruth_num
         g1_regi_NDCG_1.append(regi_g1_NDCG_i)  
         regi_g2_NDCG_i/=regi_g2_groundtruth_num
@@ -443,7 +436,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     POI_g2_NDCG_i_5+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         POI_g1_NDCG_i_5/=POI_g1_groundtruth_num
         g1_POI_NDCG_5.append(POI_g1_NDCG_i_5)  
         POI_g2_NDCG_i_5/=POI_g2_groundtruth_num
@@ -467,7 +460,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     cate_g2_NDCG_i_5+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         cate_g1_NDCG_i_5/=cate_g1_groundtruth_num
         g1_cate_NDCG_5.append(cate_g1_NDCG_i_5)  
         cate_g2_NDCG_i_5/=cate_g2_groundtruth_num
@@ -491,7 +484,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     regi_g2_NDCG_i_5+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         regi_g1_NDCG_i_5/=regi_g1_groundtruth_num
         g1_regi_NDCG_5.append(regi_g1_NDCG_i_5)  
         regi_g2_NDCG_i_5/=regi_g2_groundtruth_num
@@ -516,7 +509,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     g2_NDCG_i_10+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         g1_NDCG_i_10/=POI_g1_groundtruth_num
         g1_POI_NDCG_10.append(g1_NDCG_i_10)  
         g2_NDCG_i_10/=POI_g2_groundtruth_num
@@ -540,7 +533,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     cate_g2_NDCG_i_10+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         cate_g1_NDCG_i_10/=cate_g1_groundtruth_num
         g1_cate_NDCG_10.append(cate_g1_NDCG_i_10)  
         cate_g2_NDCG_i_10/=cate_g2_groundtruth_num
@@ -564,7 +557,7 @@ def train_test(model,POI_adj_matrix,POI_train_data, POI_test_data,cate_train_dat
                     regi_g2_NDCG_i_10+=1/(math.log2(1+j+1))
                     break
                 else:
-                    raise ValueError(f'Invalid group label')
+                    continue
         regi_g1_NDCG_i_10/=regi_g1_groundtruth_num
         g1_regi_NDCG_10.append(regi_g1_NDCG_i_10)  
         regi_g2_NDCG_i_10/=regi_g2_groundtruth_num
