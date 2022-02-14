@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('--l2', type=float, default=0.0001, help='L2 regularization coefficient')
     parser.add_argument('--step', type=int, default=1, help='the number of GCN layers')
     parser.add_argument('--patience', type=int, default=10, help='the number of epoch to wait before early stop')
-    parser.add_argument('--topk', type=int, default=10,help='top number of recommend list')
+    parser.add_argument('--topk', type=int, default=10,help='top number of recommendation list')
     parser.add_argument('--n_head', type=int, default=1,help='the heads of self-attention')
     parser.add_argument('--k_blocks', type=int, default=1,help='the blocks of self-attention')
     parser.add_argument('--GCN_drop_out', type=float, default=0.5,help='the droup out rate of GCN')
