@@ -21,6 +21,7 @@ MCMG is short for 'A **M**ulti-**C**hannel Next POI Recommendation Framework wit
     - `PHO.rar`: all the data files of Phoenix;
   - `SIN/`
     - `SIN.rar`: all the data files of Singapore;
+- `appendix.pdf`: the best parameter settings for all methods;
 - `main.py`: main file;
 - `model.py`: MCMG model file;
 - `parameter_setting.py`: parameter settings file;
